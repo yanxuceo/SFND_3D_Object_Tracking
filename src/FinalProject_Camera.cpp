@@ -74,7 +74,6 @@ int main(int argc, const char *argv[])
   
     RingBuffer<DataFrame, 2U> dataBuffer;         // 2 images which are held in memory (ring buffer) at the same time
     bool result = false;
-    
     bool bVis = false;                            // visualize results
 
     /* MAIN LOOP OVER ALL IMAGES */
@@ -144,7 +143,7 @@ int main(int argc, const char *argv[])
         
         
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
-        continue; // skips directly to the next image without processing what comes beneath
+        continue; 
 
         /* DETECT IMAGE KEYPOINTS */
 
@@ -160,9 +159,13 @@ int main(int argc, const char *argv[])
         {
             detKeypointsShiTomasi(keypoints, imgGray, false);
         }
+        else if (detectorType.compare("HARRIS") == 0)
+        {
+            detKeypointsHarris(keypoints, imgGray, true);
+        }
         else
         {
-            //...
+            detKeypointsModern(keypoints, imgGray, detectorType, true);
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
