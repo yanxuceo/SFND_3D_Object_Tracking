@@ -120,7 +120,7 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
     // display image
     string windowName = "3D Objects";
-    cv::namedWindow(windowName, 1);
+    cv::namedWindow(windowName, 2);
     cv::imshow(windowName, topviewImg);
 
     if(bWait)
@@ -154,5 +154,45 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    for(auto it = prevFrame.boundingBoxes.begin(); it != prevFrame.boundingBoxes.end(); it++)
+    {
+        std::vector<vector<cv::DMatch>::iterator> enclose;
+        for(auto it1 = matches.begin(); it1 != matches.end(); it1++)
+        {
+            int prevKeyPointIdx = it1->queryIdx;
+           
+            if(it->roi.contains(prevFrame.keypoints.at(prevKeyPointIdx).pt))
+            {
+                enclose.push_back(it1);
+            }
+        }
+
+        std::multimap<int, int> record;
+        for(auto it2 = enclose.begin(); it2 != enclose.end(); it2++)
+        {
+            int currKeyPointIdx = (*it2)->trainIdx;
+            for(auto it3 = currFrame.boundingBoxes.begin(); it3 != currFrame.boundingBoxes.end(); it3++)
+            {
+                if(it3->roi.contains(currFrame.keypoints.at(currKeyPointIdx).pt))
+                {
+                    int boxId = it3->boxID;
+                    record.insert(std::pair<int, int>(boxId, currKeyPointIdx));
+                }
+            }
+        }
+
+        int max = 0;
+        int index = 10000;
+        for(auto it_4 = record.begin(); it_4 != record.end(); it_4++)
+        {
+            if(record.count(it_4->first) > max)
+            {
+                max = record.count(it_4->first);
+                index = it_4->first;
+            }  
+        }
+
+        bbBestMatches.insert(std::pair<int, int>(it->boxID, index));
+    }
+   
 }
