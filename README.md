@@ -32,37 +32,35 @@ Storing the matching in a multimap(allows repetitive key value). Due to the mism
 |      Box-3         |      kPt_6        |
 |      Box-4         |      kPt_7        | 
 |      Box-4         |      kPt_8        | 
-(The data is read from that figure above, the one Box-3 and two Box-4 is caused by that mismatching(Blue Line) respectively.)
+
+Note: The data is read from that figure above, the one Box-3 and two Box-4 is caused by that mismatching(Blue Line) respectively.
 
 _step4_
 Everything is clear now, five keypoints fall into the Box-5, so Box-4 in previous data frame finds his sibling in the current data frame. we return [boxId_4, boxId_5].
 
-**_The Code_**
+
+**_Code_**
 ```
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     for(auto it = prevFrame.boundingBoxes.begin(); it != prevFrame.boundingBoxes.end(); it++)
     {
         std::vector<vector<cv::DMatch>::iterator> enclose;
-
-        for(auto it1 = matches.begin(); it1 != matches.end(); it1++)
+        for(auto it1 = matches.begin(); it1 != matches.end(); it1++) 
         {
             int prevKeyPointIdx = it1->queryIdx;
-           
-            if(it->roi.contains(prevFrame.keypoints.at(prevKeyPointIdx).pt))
+            if(it->roi.contains(prevFrame.keypoints.at(prevKeyPointIdx).pt)) 
             {
                 enclose.push_back(it1);
             }
         }
 
         std::multimap<int, int> record;
-        for(auto it2 = enclose.begin(); it2 != enclose.end(); it2++)
-        {
+        for(auto it2 = enclose.begin(); it2 != enclose.end(); it2++) {
             int currKeyPointIdx = (*it2)->trainIdx;
             for(auto it3 = currFrame.boundingBoxes.begin(); it3 != currFrame.boundingBoxes.end(); it3++)
             {
-                if(it3->roi.contains(currFrame.keypoints.at(currKeyPointIdx).pt))
-                {
+                if(it3->roi.contains(currFrame.keypoints.at(currKeyPointIdx).pt)) {
                     int boxId = it3->boxID;
                     record.insert(std::pair<int, int>(boxId, currKeyPointIdx));
                 }
@@ -72,17 +70,14 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         int max = 0;
         int index = 10000;
 
-        if(record.size() > 0)
-        {
+        if(record.size() > 0) {
             for(auto it_4 = record.begin(); it_4 != record.end(); it_4++)
             {
-                if(record.count(it_4->first) > max)
-                {
+                if(record.count(it_4->first) > max) {
                     max = record.count(it_4->first);
                     index = it_4->first;
                 }  
             }
-
             bbBestMatches.insert(std::pair<int, int>(it->boxID, index));
         }
     }
