@@ -122,8 +122,8 @@ int main(int argc, const char *argv[])
         std::vector<LidarPoint> lidarPoints;
         loadLidarFromFile(lidarPoints, lidarFullFilename);
 
-        // remove Lidar points based on distance properties
-        float minZ = -1.5, maxZ = -0.9, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.1; // focus on ego lane
+        // remove Lidar points based on distance properties  z = -0.9 R = 0.1
+        float minZ = -1.5, maxZ = -0.99, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.2; // focus on ego lane
         cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
     
         dataBuffer.Back(result).lidarPoints = lidarPoints;
@@ -140,7 +140,7 @@ int main(int argc, const char *argv[])
         
         if(b3DVis)
         {
-            show3DObjects(dataBuffer.Back(result).boundingBoxes, cv::Size(10.0, 25.0), cv::Size(1000, 2000), true); // 4;20  2000;2000
+            show3DObjects(dataBuffer.Back(result).boundingBoxes, cv::Size(10.0, 25.0), cv::Size(1000, 2000), false); // 4;20  2000;2000
         }
 
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
@@ -156,7 +156,7 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
+        string detectorType = "FAST";
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
@@ -176,42 +176,36 @@ int main(int argc, const char *argv[])
         if (bLimitKpts)
         {
             int maxKeypoints = 50;
-
             if (detectorType.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
                 keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
             }
+
             cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
             cout << " NOTE: Keypoints have been limited!" << endl;
         }
 
         // push keypoints and descriptor for current frame to end of data buffer
         dataBuffer.Back(result).keypoints = keypoints;
-
         cout << "#5 : DETECT KEYPOINTS done" << endl;
 
-
         /* EXTRACT KEYPOINT DESCRIPTORS */
-
         cv::Mat descriptors;
         string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints(dataBuffer.Back(result).keypoints, dataBuffer.Back(result).cameraImg, descriptors, descriptorType);
 
         // push descriptors for current frame to end of data buffer
         dataBuffer.Back(result).descriptors = descriptors;
-
         cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
-
 
         if (dataBuffer.Size() > 1) // wait until at least two images have been processed
         {
-
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
             matchDescriptors(dataBuffer.Front(result).keypoints, dataBuffer.Back(result).keypoints,
                              dataBuffer.Front(result).descriptors, dataBuffer.Back(result).descriptors,
@@ -219,18 +213,14 @@ int main(int argc, const char *argv[])
 
             // store matches in current data frame
             dataBuffer.Back(result).kptMatches = matches;
-
             cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
-
             
             /* TRACK 3D OBJECT BOUNDING BOXES */
-
-            //// STUDENT ASSIGNMENT
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
             matchBoundingBoxes(matches, bbBestMatches, dataBuffer.Front(result), dataBuffer.Back(result)); // associate bounding boxes between current and previous frame using keypoint matches
-            //// EOF STUDENT ASSIGNMENT
 
+            // display best match result
             for(auto &bbBestMatch : bbBestMatches)
             {
                 std::cout << bbBestMatch.first << ", " << bbBestMatch.second << std::endl;
@@ -238,12 +228,10 @@ int main(int argc, const char *argv[])
 
             // store matches in current data frame
             dataBuffer.Back(result).bbMatches = bbBestMatches;
-
             cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
 
 
             /* COMPUTE TTC ON OBJECT IN FRONT */
-
             // loop over all BB match pairs
             for (auto it1 = dataBuffer.Back(result).bbMatches.begin(); it1 != dataBuffer.Back(result).bbMatches.end(); ++it1)
             {
@@ -268,19 +256,15 @@ int main(int argc, const char *argv[])
                 // compute TTC for current match
                 if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
                 {
-                    //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
                     double ttcLidar; 
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
-                    //// EOF STUDENT ASSIGNMENT
 
-                    //// STUDENT ASSIGNMENT
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
                     double ttcCamera;
                     clusterKptMatchesWithROI(*currBB, dataBuffer.Front(result).keypoints, dataBuffer.Back(result).keypoints, dataBuffer.Back(result).kptMatches);                    
                     computeTTCCamera(dataBuffer.Front(result).keypoints, dataBuffer.Back(result).keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
-                    //// EOF STUDENT ASSIGNMENT
 
                     bTTCVis = true;
                     if (bTTCVis)
