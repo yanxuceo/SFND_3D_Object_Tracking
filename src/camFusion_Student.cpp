@@ -154,9 +154,12 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
+    // loop through every bounding box in the previous frame
     for(auto it = prevFrame.boundingBoxes.begin(); it != prevFrame.boundingBoxes.end(); it++)
     {
         std::vector<vector<cv::DMatch>::iterator> enclose;
+
+        // loop through every matched keypoint in the previous frame, find all those located in the same bounding box
         for(auto it1 = matches.begin(); it1 != matches.end(); it1++)
         {
             int prevKeyPointIdx = it1->queryIdx;
@@ -168,6 +171,8 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
 
         std::multimap<int, int> record;
+
+        // check to which bounding box the matched keypoint in current frame belong
         for(auto it2 = enclose.begin(); it2 != enclose.end(); it2++)
         {
             int currKeyPointIdx = (*it2)->trainIdx;
@@ -183,16 +188,20 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
         int max = 0;
         int index = 10000;
-        for(auto it_4 = record.begin(); it_4 != record.end(); it_4++)
-        {
-            if(record.count(it_4->first) > max)
-            {
-                max = record.count(it_4->first);
-                index = it_4->first;
-            }  
-        }
 
-        bbBestMatches.insert(std::pair<int, int>(it->boxID, index));
+        // get the maximal occurrences of the matched keypoints in the current frame bounding box 
+        if(record.size() > 0)
+        {
+            for(auto it_4 = record.begin(); it_4 != record.end(); it_4++)
+            {
+                if(record.count(it_4->first) > max)
+                {
+                    max = record.count(it_4->first);
+                    index = it_4->first;
+                }  
+            }
+
+            bbBestMatches.insert(std::pair<int, int>(it->boxID, index));
+        }
     }
-   
 }
