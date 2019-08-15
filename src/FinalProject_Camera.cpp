@@ -109,6 +109,10 @@ int main(int argc, const char *argv[])
 
         cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
 
+        for(auto bo = dataBuffer.Back(result).boundingBoxes.begin(); bo != dataBuffer.Back(result).boundingBoxes.end(); bo++)
+        {
+            std::cout << "boxID has " << bo->boxID << std::endl;
+        }
 
         /* CROP LIDAR POINTS */
 
@@ -122,7 +126,6 @@ int main(int argc, const char *argv[])
         cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
     
         dataBuffer.Back(result).lidarPoints = lidarPoints;
-
         cout << "#3 : CROP LIDAR POINTS done" << endl;
 
 
@@ -141,9 +144,8 @@ int main(int argc, const char *argv[])
 
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
         
-        
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
-        continue; 
+        //continue; 
 
         /* DETECT IMAGE KEYPOINTS */
 
