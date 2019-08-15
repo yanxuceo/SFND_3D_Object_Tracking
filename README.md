@@ -1,4 +1,9 @@
 # Collision Avoidance System - Track an Object in 3D Space
+Finally, I finished this project!:notes: Many many thanks to Prof. Andreas Haja!
+
+<p align = "center">
+  <img src="media/Final.png"  width="960" height="640">
+</p>
 
 ## Part I: Solution Description
 ### FP.1 Match 3D Objects
@@ -152,7 +157,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     lidarPointsCurr.erase(std::remove_if(lidarPointsCurr.begin(), lidarPointsCurr.end(), checkFunc), 
                             lidarPointsCurr.end());
 
-    unsigned int closest_k_points = 150;
+    unsigned int closest_k_points = 50;
 
     // the given comparison function comp to construct a min heap
     auto comp = [](const LidarPoint &LP1, const LidarPoint &LP2){return LP1.x > LP2.x;};
@@ -308,11 +313,130 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 ### FP.5 Performance Evaluation 1
 #### Criteria
 Find examples where the TTC estimate of the Lidar sensor does not seem plausible. Describe your observations and provide a sound argumentation why you think this happened.
-#### Solution
 
+#### Solution
+This three following figures give an implausible TTC estimate. As can be seen in this traffic scenario, there is actually a <font color='red'>Red</font> light in front and cars around are all braking. But the TTC estimate from LiDAR from this three successive frame incredibly increase from 13s to 33.7s then drop down to 15s.  
+
+```
+double dT = 1.0 / frameRate;
+TTC = currXMean * dT / (prevXMean - currXMean);
+```
+
+##### Analysis:
+As shown in the TTC calculation formular above, I can argue that this drastic change in TTC is caused by the a smaller interval(prevXMean - currXMean) than the one in last sampling. That is, the prevXMean, shortest distance to preceding car from previous data frame, might have been influenced by some point cloud outliers, resulting in shorter distance than the actual tailgate. 
+
+##### Trial and Error:
+In the **FP.2 Compute Lidar-based TTC** part, the _closest_k_points_ is set to 50, which means take the first 50 closest LiDAR points then calculate their mean value as the closest point. Now in order to mitigate the interference of the outlier, increase this value to 150 to see what would happen. I find this time, that 33s decrease down to 22s, which is a good sign and validate my guess.
+
+
+<p align = "center">
+  <img src="media/LidarTTC-WayOff-1.png"  width="480" height="240">
+</p>
+
+<p align = "center">
+  <img src="media/LidarTTC-WayOff-2.png"  width="480" height="240">
+</p>
+
+<p align = "center">
+  <img src="media/LidarTTC-WayOff-3.png"  width="480" height="240">
+</p>
 
 
 ### FP.6 Performance Evaluation 2
 #### Criteria
-Run several detector / descriptor combinations and look at the differences in TTC estimation. Find out which methods perform best and also include several examples where camera-based TTC estimation is way off. As with Lidar, describe your observations again and also look into potential reasons.
+Run several detector/descriptor combinations and look at the differences in TTC estimation. Find out which methods perform best and also include several examples where camera-based TTC estimation is way off. As with Lidar, describe your observations again and also look into potential reasons.
+
 #### Solution
+
+|     Place      |            Combination                     | 
+|  ------------  |           -------------                    |
+|   1st place    | BRISK + BRIEF  (if prefer higher accuracy )| 
+|   2nd place    | FAST + BRIEF   (if prefer speed)                     |    
+|   3nd place    | BRISK + BRISK  (accuracy and speed are average level)| 
+
+In the mid-term project, the top 3 detector/descriptor has been seletected in terms of their performance on accuracy and speed. So here, we use them one by one for Camera TTC estimate.
+
+
+##### BRISK + BRIEF
+
+|     LiDAR TTC      |    Camera TTC       | 
+|        ---         |       ---           |
+|      12.57s        |     14.7s           | 
+|       12.2s        |     23.8s           |     
+|        22s         |       18s           |
+|        14s         |       23s           |
+|      14.2s         |       27s           |
+|       14s          |       54s           |
+|     13.7s          |       25s           |
+|      13.4s         |       18s           |
+|      12s           |       20s           |
+|      13s           |       18s           |
+|      13.3s         |       21s           |
+|      11.6s         |       17s           |
+|      8.9s          |     17.6s           |
+|        9s          |     14.6s           |
+|      8.7s          |       11s           | 
+|        9s          |       15s           | 
+|       15s          |       14s           | 
+|       12s          |       17s           | 
+
+<br>
+
+
+
+##### FAST + BRIEF
+
+|     LiDAR TTC      |    Camera TTC       | 
+|        ---         |       ---           |
+|      12.57s        |    11.2s            | 
+|       12.2s        |      13s            |     
+|         22s        |      15s            |
+|       14.3s        |    13.8s            |
+|       14.2s        |   **_-inf_** s      |
+|       14s          |      24s            |
+|      13.7s         |    12.5s            |
+|      13.4s         |    12.6s            |
+|      12s           |      14s            |
+|      13s           |      15s            |
+|      13.3s         |    13.8s            |
+|      11.6s         |    12.7s            |
+|      8.8s          |      12s            |
+|        9s          |      11s            |
+|      8.7s          |      12s            | 
+|        9s          |    12.6s            | 
+|       15s          |      11s            | 
+|       12s          |       8s            | 
+
+<br>
+
+##### BRISK + BRISK
+
+|     LiDAR TTC      |    Camera TTC       | 
+|        ---         |       ---           |
+|      12.57s        |    13.2s            | 
+|       12.2s        |      23s            |     
+|         22s        |      17s            |
+|       14.3s        |    15.4s            |
+|       14.2s        |      29s            |
+|       14s          |      18s            |
+|      13.7s         |      17s            |
+|      13.4s         |      22s            |
+|      12s           |      15s            |
+|      13s           |    13.4s            |
+|      13.3s         |    12.8s            |
+|      11.6s         |    11.2s            |
+|      8.8s          |    11.8s            |
+|        9s          |    11.8s            |
+|      8.7s          |      16s            | 
+|        9s          |      11s            | 
+|       15s          |       9s            | 
+|       12s          |      11s            | 
+
+
+
+
+
+
+
+
+
