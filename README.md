@@ -356,6 +356,19 @@ Run several detector/descriptor combinations and look at the differences in TTC 
 
 In the mid-term project, the top 3 detector/descriptor has been seletected in terms of their performance on accuracy and speed. So here, we use them one by one for Camera TTC estimate.
 
+As seen in the following statistics, there is an _-inf_ value in FAST+BRIEF. And for BRISK+BRIEF, many Camera TTC estimates are way off the LiDAR measurements. For BRISK+BRISK, they are fantastic, excpt one or two TTC estimates are longer than LiDAR's.
+
+##### Analysis:
+
+The _-inf_ is supposed from this lines of code. The list of distance ratios is not empty, it may because the distribution of keypoints don't satisfy distance threshold.
+
+```
+if (distRatios.size() == 0)
+{
+    TTC = NAN;
+    return;
+}
+```
 
 ##### BRISK + BRIEF
 
