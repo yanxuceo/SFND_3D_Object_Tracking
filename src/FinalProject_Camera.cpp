@@ -76,6 +76,7 @@ int main(int argc, const char *argv[])
     bool result = false;
     bool bVis = true;                            // visualize results
     bool b3DVis = false;
+    bool bTTCVis = true;
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -230,6 +231,11 @@ int main(int argc, const char *argv[])
             matchBoundingBoxes(matches, bbBestMatches, dataBuffer.Front(result), dataBuffer.Back(result)); // associate bounding boxes between current and previous frame using keypoint matches
             //// EOF STUDENT ASSIGNMENT
 
+            for(auto &bbBestMatch : bbBestMatches)
+            {
+                std::cout << bbBestMatch.first << ", " << bbBestMatch.second << std::endl;
+            }
+
             // store matches in current data frame
             dataBuffer.Back(result).bbMatches = bbBestMatches;
 
@@ -276,8 +282,8 @@ int main(int argc, const char *argv[])
                     computeTTCCamera(dataBuffer.Front(result).keypoints, dataBuffer.Back(result).keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = true;
-                    if (bVis)
+                    bTTCVis = true;
+                    if (bTTCVis)
                     {
                         cv::Mat visImg = dataBuffer.Back(result).cameraImg.clone();
                         showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
@@ -293,7 +299,6 @@ int main(int argc, const char *argv[])
                         cout << "Press key to continue to next frame" << endl;
                         cv::waitKey(0);
                     }
-                    bVis = false;
 
                 } // eof TTC computation
             } // eof loop over all BB matches            
