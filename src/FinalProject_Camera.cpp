@@ -74,7 +74,8 @@ int main(int argc, const char *argv[])
   
     RingBuffer<DataFrame, 2U> dataBuffer;         // 2 images which are held in memory (ring buffer) at the same time
     bool result = false;
-    bool bVis = false;                            // visualize results
+    bool bVis = true;                            // visualize results
+    bool b3DVis = false;
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -100,8 +101,8 @@ int main(int argc, const char *argv[])
 
         /* DETECT & CLASSIFY OBJECTS */
 
-        float confThreshold = 0.2;
-        float nmsThreshold = 0.4;        
+        float confThreshold = 0.23; //0.2
+        float nmsThreshold = 0.3;   //0.4    
         
         detectObjects(dataBuffer.Back(result).cameraImg, dataBuffer.Back(result).boundingBoxes, confThreshold, nmsThreshold,
                       yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
@@ -132,12 +133,11 @@ int main(int argc, const char *argv[])
         clusterLidarWithROI(dataBuffer.Back(result).boundingBoxes, dataBuffer.Back(result).lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
         // Visualize 3D objects
-        bVis = true;
-        if(bVis)
+        
+        if(b3DVis)
         {
             show3DObjects(dataBuffer.Back(result).boundingBoxes, cv::Size(10.0, 25.0), cv::Size(1000, 2000), true); // 4;20  2000;2000
         }
-        bVis = false;
 
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
         
