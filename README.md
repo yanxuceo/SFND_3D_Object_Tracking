@@ -2,7 +2,7 @@
 Finally, I finished this project!:notes: Many many thanks to Prof. Andreas Haja!
 
 <p align = "center">
-  <img src="media/Final.png"  width="960" height="640">
+  <img src="media/Final.png"  width="860" height="520">
 </p>
 
 ## Part I: Solution Description
