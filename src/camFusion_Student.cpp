@@ -148,7 +148,40 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+ 
+    double laneWidth = 1.46;              // width of the preceding lidar area
+    double yEdge = (laneWidth-0.2) / 2;
+
+    auto checkFunc = [&yEdge](const LidarPoint &lp){return abs(lp.y) >= yEdge;};
+
+    lidarPointsPrev.erase(std::remove_if(lidarPointsPrev.begin(), lidarPointsPrev.end(), checkFunc), 
+                            lidarPointsPrev.end());
+
+    lidarPointsCurr.erase(std::remove_if(lidarPointsCurr.begin(), lidarPointsCurr.end(), checkFunc), 
+                            lidarPointsCurr.end());
+
+
+    unsigned int closest_k_points = 150;
+
+    // the given comparison function comp to construct a min heap
+    auto comp = [](const LidarPoint &LP1, const LidarPoint &LP2){return LP1.x > LP2.x;};
+
+    std::make_heap(lidarPointsPrev.begin(), lidarPointsPrev.end(), comp);
+    std::sort_heap(lidarPointsPrev.begin(), lidarPointsPrev.begin() + closest_k_points, comp);
+
+    std::make_heap(lidarPointsCurr.begin(), lidarPointsCurr.end(), comp);
+    std::sort_heap(lidarPointsCurr.begin(), lidarPointsCurr.begin() + closest_k_points, comp);
+
+    auto sumX = [](const double sum, const LidarPoint &LP) {return sum + LP.x;};
+    double prevXMean = std::accumulate(lidarPointsPrev.begin(), lidarPointsPrev.begin()+closest_k_points, 0.0, sumX) / closest_k_points; 
+    double currXMean = std::accumulate(lidarPointsCurr.begin(), lidarPointsCurr.begin()+closest_k_points, 0.0, sumX) / closest_k_points; 
+    
+    std::cout << "prevXmean is " << prevXMean << std::endl;
+    std::cout << "currXmean is " << currXMean << std::endl;
+
+
+    double dT = 1.0 / frameRate;
+    TTC = currXMean * dT / (prevXMean - currXMean);
 }
 
 
