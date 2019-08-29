@@ -14,7 +14,7 @@ Implement the method "matchBoundingBoxes", which takes as input both the previou
 #### Solution
 So how to find the correspondences? This figure below illustrates a keypoint matching between previous and current camera data frames. As known here, there could be some mismatching in which the keypoint/descriptor on one object were wrongly matched with those looking-similar features on another object. But the majority of the keypoints matching are correct. Therefore we make use this fact to find the bounding box matching.
 
-:blush::laughing:Forgive my bad drawing:laughing::blush:
+:blush::laughing:Excuse my poor drawing:laughing::blush:
 <p align = "center">
   <img src="media/boundingBoxMatching.png"  width="640" height="420">
 </p>
