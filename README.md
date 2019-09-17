@@ -12,7 +12,7 @@ Finally, I finished this project!:notes: Many many thanks to Prof. Andreas Haja!
 Implement the method "matchBoundingBoxes", which takes as input both the previous and the current data frames and provides as output the ids of the matched regions of interest (the boxID property). Matches must be the ones with the highest number of keypoint correspondences.
 
 #### Solution
-So how to find the correspondences? This figure below illustrates a keypoint matching between previous and current camera data frames. As known here, there could be some mismatching in which the keypoint/descriptor on one object were wrongly matched with those looking-similar features on another object. But the majority of the keypoints matching are correct. Therefore we make use this fact to find the bounding box matching.
+So how to find the correspondences? This figure below illustrates a keypoint matching between previous and current camera data frames. As shown here, there could be some mismatching in which the keypoint/descriptor on one object were wrongly matched with those looking-similar features on another object. But the majority of the keypoints matching are correct. Therefore we make use this fact to find the bounding box matching.
 
 :blush::laughing:Excuse my poor drawing:laughing::blush:
 <p align = "center">
